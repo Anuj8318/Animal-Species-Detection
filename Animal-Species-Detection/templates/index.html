@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Animal Detection</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <style>
+        /* Style for arranging elements side by side */
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: flex-start;
+        }
+
+        .section {
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .navbar {
+            height: 70px; /* Change the height */
+            background-color:  #f6ddcc ; /* Change the background color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .navbar h1 {
+            color: black; /* Set text color */
+            margin: 0; /* Remove default margin */
+        }
+    </style>
+</head>
+<body>
+   <nav class="navbar navbar-expand-sm">
+        <div class="container-fluid">
+            <span class="navbar-text">
+                <h1>Animal Detection System</h1>
+            </span>
+        </div>
+    </nav>
+    <div class="container">
+        <!-- Option 1: Upload Image -->
+        <div class="section">
+            <h2 style="color:   #fcc90a   ">Option 1: Upload Image</h2>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <input type="file" name="file" id="fileInput">
+                <button type="submit" type="button" class="btn btn-warning" id="detectButton">Detect from Image</button>
+            </form>
+            <div id="uploadResult">
+                <div id="uploadLabel"></div>
+                <img id="uploadedImage" style="display: none; width: 300px; height: auto; margin-top: 20px;">
+            </div>
+        </div>
+
+        <!-- Option 2: Webcam -->
+        <div class="section">
+            <h2 style ="color:  #fa4455  ">Option 2: Webcam</h2>
+            <div id="webcamContainer">
+                <video id="videoFeed" width="300" height="200" autoplay></video>
+                <button id="detectFromWebcam" type="button" class="btn btn-danger">Detect from Webcam</button>
+            </div>
+            <div id="webcamResult">
+                <div id="webcamLabel"></div>
+                <img id="webcamImage" style="display: none; width: 300px; height: auto; margin-top: 20px;">
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#uploadForm').submit(function(event) {
+                event.preventDefault();
+                var formData = new FormData($(this)[0]);
+
+                $.ajax({
+                    url: '/detect',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#uploadLabel').text('Detected Animal (Upload): ' + response.label);
+                        $('#uploadedImage').attr('src', response.image_path + '?' + new Date().getTime()).css('display', 'block');
+                    },
+                    error: function(error) {
+                        $('#uploadLabel').text('Error (Upload): ' + error.responseJSON.error);
+                        $('#uploadedImage').css('display', 'none');
+                    }
+                });
+            });
+
+            const video = document.getElementById('videoFeed');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 300;
+            canvas.height = 200;
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    video.srcObject = stream;
+                })
+                .catch((err) => {
+                    console.error('Error accessing webcam:', err);
+                });
+
+            $('#detectFromWebcam').click(function() {
+                context.drawImage(video, 0, 0, 300, 200);
+                canvas.toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append('file', blob, 'webcam_capture.png');
+
+                    $.ajax({
+                        url: '/detect',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            $('#webcamLabel').text('Detected Animal (Webcam): ' + response.label);
+                            $('#webcamImage').attr('src', response.image_path + '?' + new Date().getTime()).css('display', 'block');
+                        },
+                        error: function(error) {
+                            $('#webcamLabel').text('Error (Webcam): ' + error.responseJSON.error);
+                            $('#webcamImage').css('display', 'none');
+                        }
+                    });
+                }, 'image/png');
+            });
+        });
+    </script>
+</body>
+</html>

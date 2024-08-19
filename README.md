@@ -22,7 +22,7 @@ Getting Started
 Clone the Repository
 bash
 Copy code
-git clone https://github.com/yourusername/animal-detection-webapp.git
+git clone https://github.com/Anuj8318/Animal-Species-Detection.git
 cd animal-detection-webapp
 Create Folder Structure
 The folder structure should look like this:
